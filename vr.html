@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+  <title>VR Bar Chart</title>
+</head>
+<body>
+
+    <a-scene>
+        <a-assets>
+            <img id="360bg"
+               src="https://images.pexels.com/photos/11576747/pexels-photo-11576747.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" >
+        </a-assets>
+
+
+      <a-entity position="5 2 8" rotation="0 0 0">
+        <a-entity camera look-controls wasd-controls>
+			<a-entity cursor="fuse: true; fuseTimeout: 500"
+            position="0 0 -2"
+            geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.027"
+            material="shader: ocean; color: blue; shader: flat"
+  			</a-entity>
+    	</a-entity>
+      </a-entity>
+	<a-entity light="type: point; color: 'white'; intensity: 0.8" position="20 40 20"></a-entity>
+	<a-entity light="type: point; color: 'white'; intensity: 0.8" position="-20 40 20"></a-entity>
+    <a-sky
+        src="#360bg">
+    </a-sky>
+	</a-scene>
+
+  <script>
+
+	let alpha = 0.9
+
+
+
+
+    const dataset=d3.csv("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/7_OneCatOneNum_header.csv", function(data){
+
+        let dataInfo = 'Value'
+
+        data.forEach(function(d) {
+            d[dataInfo] = +d[dataInfo];
+        });
+
+        let yScale = d3.scale.linear()
+            .range([0, 3])
+            .domain(d3.extent(data, function(d){ console.log(d[dataInfo]); return d[dataInfo]}));
+
+        console.log(yScale.domain())
+
+        const scene = d3.select('a-scene')
+
+        let bars = scene.selectAll('a-box.bar')
+            .data(data)
+          .enter().append('a-box')
+            .classed('bar', true);
+
+        bars.attr({
+            position : function(d,i) {
+                let x =  i * 1.2
+                let y = yScale(d[dataInfo])/2;
+                let z = 1
+                return x + " " + y + " " + z
+            },
+            width: function(d) { return 0.8},
+            depth: function(d) { return 0.3},
+            height: function(d) {return d3.max([yScale(d[dataInfo]), 0.0001])},
+            opacity: alpha,
+            color: '#69b3a2'
+            });
+
+
+        let text = scene.selectAll('a-text .desc')
+            .data(data)
+          .enter().append('a-text')
+          .classed('desc', true);
+
+        text.attr({
+            position : function(d,i) {
+                let x =  i * 1.2
+                let y = -0.35
+                let z = 1
+                return x + " " + y + " " + z
+            },
+            value: function(d){return d['Country'].replace(' ', '\n');},
+            color: 'white',
+            align: 'center',
+            baseline: 'top',
+            width: 6,
+        })
+
+        let numFormat = d3.format("$,.2s");
+        let numText = scene.selectAll('a-text .num')
+            .data(data)
+          .enter().append('a-text')
+            .classed('num', true);
+
+          numText.attr({
+            position : function(d,i) {
+                let x =  i * 1.2
+                let y = yScale(d[dataInfo]) + 0.5
+                let z = 1
+                return x + " " + y + " " + z
+            },
+            value: function(d){return numFormat(d[dataInfo]).replace('G', 'B');},
+            color: 'white',
+            align: 'center',
+            width: 6,
+        })
+
+        scene.append('a-text')
+            .attr({
+                position: '5 5 0',
+                value: 'VR Data Viz Test',
+                color: 'white',
+                align: 'center',
+                width: 10,
+            })
+
+
+    })
+
+  </script>
+
+  <script>
+
+    $(".bar").each(function() {
+        this.components.material.material.alphaTest = 0.5;
+      this.components.material.material.depthWrite = false;
+      this.components.material.material.needsUpdate = true;;
+    });
+
+	</script>
+
+</body>
+</html>
